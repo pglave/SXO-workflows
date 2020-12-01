@@ -1,0 +1,955 @@
+{
+  "workflow": {
+    "unique_name": "definition_workflow_01JY89HVKKM712Wlep5aJCZ4dP2u8g3AqXh",
+    "name": "Handle MISP IOCs - with filter",
+    "title": "Handle MISP IOCs - with filter",
+    "type": "generic.workflow",
+    "base_type": "workflow",
+    "variables": [
+      {
+        "schema_id": "datatype.string",
+        "properties": {
+          "value": "",
+          "scope": "local",
+          "name": "email_recipient",
+          "type": "datatype.string",
+          "is_required": true,
+          "is_invisible": false
+        },
+        "unique_name": "variable_workflow_01JY89HUZV3B97HheuwwRDZuhS8UrrSB3NA",
+        "object_type": "variable_workflow"
+      },
+      {
+        "schema_id": "datatype.string",
+        "properties": {
+          "value": " ",
+          "scope": "local",
+          "name": "CR",
+          "type": "datatype.string",
+          "is_required": false,
+          "is_invisible": false
+        },
+        "unique_name": "variable_workflow_01JY89HUZUYV60qJovt34cnKPzLpadCQfNN",
+        "object_type": "variable_workflow"
+      },
+      {
+        "schema_id": "datatype.string",
+        "properties": {
+          "value": "",
+          "scope": "local",
+          "name": "filtered_observables_json",
+          "type": "datatype.string",
+          "is_required": false,
+          "is_invisible": false
+        },
+        "unique_name": "variable_workflow_01KI3TFUFR93K1cha9xJ0Yg3br7T1ZxZWIT",
+        "object_type": "variable_workflow"
+      },
+      {
+        "schema_id": "datatype.string",
+        "properties": {
+          "value": "",
+          "scope": "local",
+          "name": "target_details_tmp",
+          "type": "datatype.string",
+          "is_required": false,
+          "is_invisible": false
+        },
+        "unique_name": "variable_workflow_01JY89HUZV6VP5Oa3DdpnEgEfkMqnlDNt8B",
+        "object_type": "variable_workflow"
+      },
+      {
+        "schema_id": "datatype.string",
+        "properties": {
+          "value": "",
+          "scope": "local",
+          "name": "indicators",
+          "type": "datatype.string",
+          "is_required": false,
+          "is_invisible": false
+        },
+        "unique_name": "variable_workflow_01JY89HUZV7XE4cEuKD4SzMbPSyelVI8TCL",
+        "object_type": "variable_workflow"
+      },
+      {
+        "schema_id": "tabletype_01JY94PPFF7V70LaoyLIy2MA4gHxJXAT7Qp",
+        "properties": {
+          "scope": "local",
+          "name": "filtered_observables",
+          "type": "datatype.table",
+          "is_required": false,
+          "is_invisible": false
+        },
+        "unique_name": "variable_workflow_01JYBQM750ZCF7MWYGmb1wDI6ZVGVh0FfZD",
+        "object_type": "variable_workflow"
+      },
+      {
+        "schema_id": "datatype.string",
+        "properties": {
+          "value": "",
+          "scope": "local",
+          "name": "webex_message",
+          "type": "datatype.string",
+          "is_required": false,
+          "is_invisible": false
+        },
+        "unique_name": "variable_workflow_01JY89HUZV5R36dSzSbZxLTxdfBUzFQEo3s",
+        "object_type": "variable_workflow"
+      },
+      {
+        "schema_id": "datatype.string",
+        "properties": {
+          "value": "",
+          "scope": "local",
+          "name": "email_sender",
+          "type": "datatype.string",
+          "is_required": true,
+          "is_invisible": false
+        },
+        "unique_name": "variable_workflow_01JY89HUZV4KY5sNamqqzs4ui8Eiln32Vnq",
+        "object_type": "variable_workflow"
+      }
+    ],
+    "properties": {
+      "atomic": {
+        "is_atomic": false
+      },
+      "delete_workflow_instance": false,
+      "description": "The playbook steps:\n\n1.\tGet Indicators - Make a generic http request to a web hosted IOC JSON file in MISP format, parse it and store the indicators.\n2.\tParse IOCs - from raw text using SecureX Threat Response Inspect API\n3.\tEnrich Observables - with SecureX Threat Response Enrich API to find any global sightings (in integrated threat feeds) and more importantly local sightings/targets (in integrated security modules like Umbrella, AMP, etc.). Filter what is considered NOT malicious, and store these observables in a table. (Note: focusing on NON malicious IoCs here, because we are assuming that the malicious ones have already been blocked by the security products, and we want to investigate on unknown threats, instead.)\n4.\tCreate Casebook - Format the observables in the right JSON, and use CTR to create a new casebook.",
+      "display_name": "Handle MISP IOCs - with filter",
+      "runtime_user": {
+        "override_target_runtime_user": false,
+        "specify_on_workflow_start": false,
+        "target_default": true
+      },
+      "target": {
+        "execute_on_target_group": true,
+        "target_group": {
+          "target_group_id": "target_group_01EJ0TQWPQWBD0qiWqClJKj9FOzwiZRfOFH",
+          "run_on_all_targets": false,
+          "selected_target_types": [
+            "web-service.endpoint",
+            "email.smtp_endpoint"
+          ],
+          "use_criteria": {
+            "choose_target_using_algorithm": "choose_first_with_matching_criteria",
+            "conditions": [
+              {
+                "operator": "eq",
+                "left_operand": "$targetgroup.web-service endpoint.input.display_name$",
+                "right_operand": "CTR_API"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "object_type": "definition_workflow",
+    "actions": [
+      {
+        "unique_name": "definition_activity_01JY89ICS6FIW4rEZ3N7G2tStGliJz4xuGW",
+        "name": "Group",
+        "title": "GET INDICATORS",
+        "type": "logic.group",
+        "base_type": "activity",
+        "properties": {
+          "continue_on_failure": false,
+          "display_name": "GET INDICATORS",
+          "skip_execution": false
+        },
+        "object_type": "definition_activity",
+        "actions": [
+          {
+            "unique_name": "definition_activity_01JY89IJ0R6MA3pQa6euNKxU43qOiIGNZqY",
+            "name": "HTTP Request",
+            "title": "Get JSON file from web",
+            "type": "web-service.http_request",
+            "base_type": "activity",
+            "properties": {
+              "action_timeout": 180,
+              "allow_auto_redirect": true,
+              "continue_on_error_status_code": false,
+              "continue_on_failure": false,
+              "display_name": "Get JSON file from web",
+              "method": "GET",
+              "relative_url": "/s/gs323xe9hvwf3rv/pier-observable.json?dl=1",
+              "runtime_user": {
+                "override_target_runtime_user": false,
+                "target_default": true
+              },
+              "skip_execution": false,
+              "target": {
+                "override_workflow_target": true,
+                "target_id": "definition_target_01JPSSB1YUV8Z3SA6tD22KeUQBhMpt22q9a"
+              }
+            },
+            "object_type": "definition_activity"
+          },
+          {
+            "unique_name": "definition_activity_01JY89IO8R4645s52jOOexXDe6VeWxlLfcX",
+            "name": "Execute Python Script",
+            "title": "Parse JSON - MISP",
+            "type": "python3.script",
+            "base_type": "activity",
+            "properties": {
+              "action_timeout": 180,
+              "continue_on_failure": false,
+              "display_name": "Parse JSON - MISP",
+              "script": "input_json = r\"\"\"$activity.definition_activity_01JY89IJ0R6MA3pQa6euNKxU43qOiIGNZqY.output.response_body$\"\"\"\n\nimport sys\nimport json\n\niocs = []\n\n# Get an IOC from a MISP attribute, based on the \"type\" field\ndef extract_ioc_from_attribute(attribute):\n\ttype_field = attribute[\"type\"]\n\tif (type_field == \"sha256\" or\n\t    type_field == \"hostname\" or\n\t    type_field == \"domain\"):\n\t\tiocs.append(attribute[\"value\"])\n\n### Main flow\n\n# Parse JSON \ndata = json.loads(input_json)\n\n# Now we need to get the meaningful IOCs from a MISP structure (https://www.misp-standard.org/rfc/misp-standard-core.html)\n# Assuming that the meaningful IOCs are the \"value\" fields in the Attribute object, and that\n# Attributes are present inside:\n#   response[0].Event\n#   response[0].Event.Object[]\n\nattributes = data[\"response\"][0][\"Event\"][\"Attribute\"]\nfor attr in attributes:\n\textract_ioc_from_attribute(attr) \n\n\nobjects = data[\"response\"][0][\"Event\"][\"Object\"]\nfor obj in objects:\n\tattributes = obj[\"Attribute\"]\n\tfor attr in attributes:\n\t\textract_ioc_from_attribute(attr) \n\n# At this point, all the IOCs are in the iocs array\niocs_string = ', '.join(iocs)\nprint(iocs_string)",
+              "script_queries": [
+                {
+                  "script_query": "iocs_string",
+                  "script_query_name": "iocs_string",
+                  "script_query_type": "string"
+                }
+              ],
+              "skip_execution": false
+            },
+            "object_type": "definition_activity"
+          }
+        ]
+      },
+      {
+        "unique_name": "definition_activity_01JY89IT4ZPIS7K5thmnHpnSIDinwmvR9Bc",
+        "name": "Group",
+        "title": "Parse IOCs",
+        "type": "logic.group",
+        "base_type": "activity",
+        "properties": {
+          "continue_on_failure": false,
+          "display_name": "Parse IOCs",
+          "skip_execution": false
+        },
+        "object_type": "definition_activity",
+        "actions": [
+          {
+            "unique_name": "definition_activity_01JY89J0NL3ZN2QY7xE5MCBrzwVivM1cvPK",
+            "name": "CTR Generate Access Token",
+            "title": "CTR Generate Access Token",
+            "type": "workflow.atomic_workflow",
+            "base_type": "subworkflow",
+            "properties": {
+              "continue_on_failure": false,
+              "display_name": "CTR Generate Access Token",
+              "runtime_user": {
+                "target_default": true
+              },
+              "skip_execution": false,
+              "target": {
+                "override_workflow_target_group_criteria": true,
+                "target_group": {
+                  "run_on_all_targets": false,
+                  "use_criteria": {
+                    "choose_target_using_algorithm": "choose_first_with_matching_criteria",
+                    "conditions": [
+                      {
+                        "left_operand": "$targetgroup.web-service endpoint.input.display_name$",
+                        "operator": "eq",
+                        "right_operand": "CTR_For_Access_Token"
+                      }
+                    ]
+                  }
+                }
+              },
+              "workflow_id": "definition_workflow_01779LB6MV0P02kvka9TGV5cEam84NrCTy4"
+            },
+            "object_type": "definition_activity"
+          },
+          {
+            "unique_name": "definition_activity_01JY89J8NSNAH3Mybj8aS4MtkVBxC23a3qb",
+            "name": "Inspect observables with Threat Response",
+            "title": "Inspect observables with Threat Response",
+            "type": "workflow.atomic_workflow",
+            "base_type": "subworkflow",
+            "properties": {
+              "continue_on_failure": false,
+              "description": "Convert unformatted text from ACSC Advirosy list into formatted list of observables",
+              "display_name": "Inspect observables with Threat Response",
+              "input": {
+                "variable_workflow_01C9F46FN86EW70gxvx7jTcwKMObdpaAPck": "$activity.definition_activity_01JY89IO8R4645s52jOOexXDe6VeWxlLfcX.output.script_queries.iocs_string$",
+                "variable_workflow_01C9F4PDGN5725qpK8sofdFmV1hrTAcYaGb": "$activity.definition_activity_01JY89J0NL3ZN2QY7xE5MCBrzwVivM1cvPK.output.variable_workflow_01BNOOXA3G6MV1PGAvsfZOKDdMYcE6XS726$"
+              },
+              "runtime_user": {
+                "target_default": true
+              },
+              "skip_execution": false,
+              "target": {
+                "override_workflow_target_group_criteria": true,
+                "target_group": {
+                  "run_on_all_targets": false,
+                  "use_criteria": {
+                    "choose_target_using_algorithm": "choose_first_with_matching_criteria",
+                    "conditions": [
+                      {
+                        "left_operand": "$targetgroup.web-service endpoint.input.display_name$",
+                        "operator": "eq",
+                        "right_operand": "CTR_API"
+                      }
+                    ]
+                  }
+                }
+              },
+              "workflow_id": "definition_workflow_01C9F1VJ1I5KH26f860hJC5zDSD33548bYS"
+            },
+            "object_type": "definition_activity"
+          },
+          {
+            "unique_name": "definition_activity_01JY89JGKQ0V33VWujp66jIyHvUqifQvFdc",
+            "name": "Read Table from JSON",
+            "title": "Populate table of IOCs",
+            "type": "corejava.read_table_from_json",
+            "base_type": "activity",
+            "properties": {
+              "action_timeout": 180,
+              "continue_on_failure": false,
+              "description": "Save observables to the table",
+              "display_name": "Populate table of IOCs",
+              "input_json": "$activity.definition_activity_01JY89J8NSNAH3Mybj8aS4MtkVBxC23a3qb.output.variable_workflow_01C9F6MICKTEV29S3eyPNTv36WARzQzopHd$",
+              "jsonpath_query": "$.*",
+              "persist_output": true,
+              "populate_columns": false,
+              "skip_execution": false,
+              "table_columns": [
+                {
+                  "column_name": "type",
+                  "column_type": "string"
+                },
+                {
+                  "column_name": "value",
+                  "column_type": "string"
+                }
+              ]
+            },
+            "object_type": "definition_activity"
+          }
+        ]
+      },
+      {
+        "unique_name": "definition_activity_01JY89JNQBS8F1Ke3afuv3sLzwvVwhKgUF6",
+        "name": "Group",
+        "title": "Enrich Observables",
+        "type": "logic.group",
+        "base_type": "activity",
+        "properties": {
+          "continue_on_failure": false,
+          "display_name": "Enrich Observables",
+          "skip_execution": false
+        },
+        "object_type": "definition_activity",
+        "actions": [
+          {
+            "unique_name": "definition_activity_01JY89JV1QG1C2UnkOcWmix24AinoimhG2f",
+            "name": "CTRGenerateAccessToken",
+            "title": "CTRGenerateAccessToken",
+            "type": "workflow.atomic_workflow",
+            "base_type": "subworkflow",
+            "properties": {
+              "continue_on_failure": false,
+              "display_name": "CTRGenerateAccessToken",
+              "runtime_user": {
+                "target_default": true
+              },
+              "skip_execution": false,
+              "target": {
+                "override_workflow_target_group_criteria": true,
+                "target_group": {
+                  "run_on_all_targets": false,
+                  "use_criteria": {
+                    "choose_target_using_algorithm": "choose_first_with_matching_criteria",
+                    "conditions": [
+                      {
+                        "left_operand": "$targetgroup.web-service endpoint.input.display_name$",
+                        "operator": "eq",
+                        "right_operand": "CTR_For_Access_Token"
+                      }
+                    ]
+                  }
+                }
+              },
+              "workflow_id": "definition_workflow_01779LB6MV0P02kvka9TGV5cEam84NrCTy4"
+            },
+            "object_type": "definition_activity"
+          },
+          {
+            "unique_name": "definition_activity_01JY8NLBVVVJ13FOC1iabJpiV8TiEM8fKqJ",
+            "name": "For Each",
+            "title": "For Each Inspected Observable",
+            "type": "logic.for_each",
+            "base_type": "activity",
+            "properties": {
+              "continue_on_failure": false,
+              "display_name": "For Each Inspected Observable",
+              "skip_execution": false,
+              "source_array": "$activity.definition_activity_01JY89JGKQ0V33VWujp66jIyHvUqifQvFdc.output.read_table_from_json$"
+            },
+            "object_type": "definition_activity",
+            "actions": [
+              {
+                "unique_name": "definition_activity_01JY89K1ZKDW57FnD7tkTAAaeURpyxULeyp",
+                "name": "HTTP Request",
+                "title": "Enrich Observable",
+                "type": "web-service.http_request",
+                "base_type": "activity",
+                "properties": {
+                  "accept": "application/json",
+                  "action_timeout": 180,
+                  "allow_auto_redirect": true,
+                  "body": "[{\n\"type\": \"$activity.definition_activity_01JY8NLBVVVJ13FOC1iabJpiV8TiEM8fKqJ.input.source_array[@].type$\",\n\"value\": \"$activity.definition_activity_01JY8NLBVVVJ13FOC1iabJpiV8TiEM8fKqJ.input.source_array[@].value$\"\n}] ",
+                  "content_type": "application/json",
+                  "continue_on_error_status_code": false,
+                  "continue_on_failure": false,
+                  "custom_headers": [
+                    {
+                      "name": "Authorization",
+                      "value": "Bearer $activity.definition_activity_01JY89JV1QG1C2UnkOcWmix24AinoimhG2f.output.variable_workflow_01BNOOXA3G6MV1PGAvsfZOKDdMYcE6XS726$"
+                    }
+                  ],
+                  "description": "Observe an Entity - return Sightings from your modules about any of the above entity types. Sighting - an observation of an observable. For example, an endpoint detecting a file hash detected on a filesystem, or on the network by a firewall.",
+                  "display_name": "Enrich Observable",
+                  "method": "POST",
+                  "relative_url": "/iroh-enrich/observe/observables",
+                  "runtime_user": {
+                    "target_default": true
+                  },
+                  "skip_execution": false,
+                  "target": {
+                    "override_workflow_target_group_criteria": true,
+                    "target_group": {
+                      "use_criteria": {
+                        "choose_target_using_algorithm": "choose_first_with_matching_criteria",
+                        "conditions": [
+                          {
+                            "left_operand": "$targetgroup.web-service endpoint.input.display_name$",
+                            "operator": "eq",
+                            "right_operand": "CTR_API"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                },
+                "object_type": "definition_activity"
+              },
+              {
+                "unique_name": "definition_activity_01JYAPBIZSOCF0WVzI5r5LGkhzaFHJqBwhB",
+                "name": "JSONPath Query",
+                "title": "Filter disposition name",
+                "type": "corejava.jsonpathquery",
+                "base_type": "activity",
+                "properties": {
+                  "action_timeout": 180,
+                  "continue_on_failure": false,
+                  "display_name": "Filter disposition name",
+                  "input_json": "$activity.definition_activity_01JY89K1ZKDW57FnD7tkTAAaeURpyxULeyp.output.response_body$",
+                  "jsonpath_queries": [
+                    {
+                      "jsonpath_query": "$..disposition_name",
+                      "jsonpath_query_name": "disposition_name",
+                      "jsonpath_query_type": "string"
+                    }
+                  ],
+                  "skip_execution": false
+                },
+                "object_type": "definition_activity"
+              },
+              {
+                "unique_name": "definition_activity_01JYAUHF26PPU1mE9f64LlXw7LbP3R6wCX5",
+                "name": "Condition Block",
+                "title": "Malicious?",
+                "type": "logic.if_else",
+                "base_type": "activity",
+                "properties": {
+                  "continue_on_failure": false,
+                  "display_name": "Malicious?",
+                  "skip_execution": false
+                },
+                "object_type": "definition_activity",
+                "blocks": [
+                  {
+                    "unique_name": "definition_activity_01JYAUHHTZ18U2goCcLlT8FJFUGTtulFgTf",
+                    "name": "Condition Branch",
+                    "title": "No",
+                    "type": "logic.condition_block",
+                    "base_type": "activity",
+                    "properties": {
+                      "condition": {
+                        "left_operand": "$activity.definition_activity_01JYAPBIZSOCF0WVzI5r5LGkhzaFHJqBwhB.output.jsonpath_queries.disposition_name$",
+                        "operator": "nmw",
+                        "right_operand": "*Malicious*"
+                      },
+                      "continue_on_failure": false,
+                      "display_name": "No",
+                      "skip_execution": false
+                    },
+                    "object_type": "definition_activity",
+                    "actions": [
+                      {
+                        "unique_name": "definition_activity_01JYBJ2GVY6HJ1DcQVJgIk9klttboGpxysU",
+                        "name": "Add Row to Table",
+                        "title": "Add Row to Table",
+                        "type": "core.addrowtotable",
+                        "base_type": "activity",
+                        "properties": {
+                          "action_timeout": 180,
+                          "continue_on_failure": false,
+                          "display_name": "Add Row to Table",
+                          "input_table": "$workflow.definition_workflow_01JY89HVKKM712Wlep5aJCZ4dP2u8g3AqXh.local.variable_workflow_01JYBQM750ZCF7MWYGmb1wDI6ZVGVh0FfZD$",
+                          "row": [
+                            {
+                              "key": "type",
+                              "type": "string",
+                              "value": "$activity.definition_activity_01JY8NLBVVVJ13FOC1iabJpiV8TiEM8fKqJ.input.source_array[@].type$"
+                            },
+                            {
+                              "key": "value",
+                              "type": "string",
+                              "value": "$activity.definition_activity_01JY8NLBVVVJ13FOC1iabJpiV8TiEM8fKqJ.input.source_array[@].value$"
+                            }
+                          ],
+                          "skip_execution": false
+                        },
+                        "object_type": "definition_activity"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "unique_name": "definition_activity_01JY89MPJX6MC31AbUp0CPeO4UBXvRshBKe",
+        "name": "Group",
+        "title": "Create  Casebook",
+        "type": "logic.group",
+        "base_type": "activity",
+        "properties": {
+          "continue_on_failure": false,
+          "display_name": "Create  Casebook",
+          "skip_execution": false
+        },
+        "object_type": "definition_activity",
+        "actions": [
+          {
+            "unique_name": "definition_activity_01KJTYNTF1QS263kE5eQZa5TCB2lFN7jCLd",
+            "name": "Group",
+            "title": "Prepare JSON for Casebook",
+            "type": "logic.group",
+            "base_type": "activity",
+            "properties": {
+              "continue_on_failure": false,
+              "display_name": "Prepare JSON for Casebook",
+              "skip_execution": false
+            },
+            "object_type": "definition_activity",
+            "actions": [
+              {
+                "unique_name": "definition_activity_01KI3X8ZNOAUC09Lpwvnkmgq0woksu5nhYk",
+                "name": "Set Variables",
+                "title": "Initialize JSON array",
+                "type": "core.set_multiple_variables",
+                "base_type": "activity",
+                "properties": {
+                  "continue_on_failure": false,
+                  "display_name": "Initialize JSON array",
+                  "skip_execution": false,
+                  "variables_to_update": [
+                    {
+                      "variable_to_update": "$workflow.definition_workflow_01JY89HVKKM712Wlep5aJCZ4dP2u8g3AqXh.local.variable_workflow_01KI3TFUFR93K1cha9xJ0Yg3br7T1ZxZWIT$",
+                      "variable_value_new": "["
+                    }
+                  ]
+                },
+                "object_type": "definition_activity"
+              },
+              {
+                "unique_name": "definition_activity_01KI3YQMEI0X66mxkPzvhFlvnu8728Lx2O8",
+                "name": "For Each",
+                "title": "For Each non malicious observable",
+                "type": "logic.for_each",
+                "base_type": "activity",
+                "properties": {
+                  "continue_on_failure": false,
+                  "display_name": "For Each non malicious observable",
+                  "skip_execution": false,
+                  "source_array": "$workflow.definition_workflow_01JY89HVKKM712Wlep5aJCZ4dP2u8g3AqXh.local.variable_workflow_01JYBQM750ZCF7MWYGmb1wDI6ZVGVh0FfZD$"
+                },
+                "object_type": "definition_activity",
+                "actions": [
+                  {
+                    "unique_name": "definition_activity_01KI3YYY4QREE2i72gvUTFKeYnuCNVHob5H",
+                    "name": "Set Variables",
+                    "title": "Add it to JSON array",
+                    "type": "core.set_multiple_variables",
+                    "base_type": "activity",
+                    "properties": {
+                      "continue_on_failure": false,
+                      "display_name": "Add it to JSON array",
+                      "skip_execution": false,
+                      "variables_to_update": [
+                        {
+                          "variable_to_update": "$workflow.definition_workflow_01JY89HVKKM712Wlep5aJCZ4dP2u8g3AqXh.local.variable_workflow_01KI3TFUFR93K1cha9xJ0Yg3br7T1ZxZWIT$",
+                          "variable_value_new": "$workflow.definition_workflow_01JY89HVKKM712Wlep5aJCZ4dP2u8g3AqXh.local.variable_workflow_01KI3TFUFR93K1cha9xJ0Yg3br7T1ZxZWIT${\"value\":\"$activity.definition_activity_01KI3YQMEI0X66mxkPzvhFlvnu8728Lx2O8.input.source_array[@].value$\",\"type\":\"$activity.definition_activity_01KI3YQMEI0X66mxkPzvhFlvnu8728Lx2O8.input.source_array[@].type$\"},"
+                        }
+                      ]
+                    },
+                    "object_type": "definition_activity"
+                  }
+                ]
+              },
+              {
+                "unique_name": "definition_activity_01KI3Y77OKIZD3gKF8QJPRM65qOP0JTYaYr",
+                "name": "Set Variables",
+                "title": "Terminate JSON array",
+                "type": "core.set_multiple_variables",
+                "base_type": "activity",
+                "properties": {
+                  "continue_on_failure": false,
+                  "display_name": "Terminate JSON array",
+                  "skip_execution": false,
+                  "variables_to_update": [
+                    {
+                      "variable_to_update": "$workflow.definition_workflow_01JY89HVKKM712Wlep5aJCZ4dP2u8g3AqXh.local.variable_workflow_01KI3TFUFR93K1cha9xJ0Yg3br7T1ZxZWIT$",
+                      "variable_value_new": "$workflow.definition_workflow_01JY89HVKKM712Wlep5aJCZ4dP2u8g3AqXh.local.variable_workflow_01KI3TFUFR93K1cha9xJ0Yg3br7T1ZxZWIT$]"
+                    }
+                  ]
+                },
+                "object_type": "definition_activity"
+              },
+              {
+                "unique_name": "definition_activity_01KI4BN2INJ024KQgP1SnQOZJO3uliGalxd",
+                "name": "Replace String",
+                "title": "Fix last array item",
+                "type": "core.replacestring",
+                "base_type": "activity",
+                "properties": {
+                  "continue_on_failure": false,
+                  "display_name": "Fix last array item",
+                  "input_string": "$workflow.definition_workflow_01JY89HVKKM712Wlep5aJCZ4dP2u8g3AqXh.local.variable_workflow_01KI3TFUFR93K1cha9xJ0Yg3br7T1ZxZWIT$",
+                  "replace_list": [
+                    {
+                      "replaced_string": "},]",
+                      "replacement_string": "}]"
+                    }
+                  ],
+                  "skip_execution": false
+                },
+                "object_type": "definition_activity"
+              },
+              {
+                "unique_name": "definition_activity_01KI4E093QKXW45E8n0gQ6WozKbyxyOucr6",
+                "name": "Set Variables",
+                "title": "Reassign JSON array",
+                "type": "core.set_multiple_variables",
+                "base_type": "activity",
+                "properties": {
+                  "continue_on_failure": false,
+                  "display_name": "Reassign JSON array",
+                  "skip_execution": false,
+                  "variables_to_update": [
+                    {
+                      "variable_to_update": "$workflow.definition_workflow_01JY89HVKKM712Wlep5aJCZ4dP2u8g3AqXh.local.variable_workflow_01KI3TFUFR93K1cha9xJ0Yg3br7T1ZxZWIT$",
+                      "variable_value_new": "$activity.definition_activity_01KI4BN2INJ024KQgP1SnQOZJO3uliGalxd.output.result_string$"
+                    }
+                  ]
+                },
+                "object_type": "definition_activity"
+              }
+            ]
+          },
+          {
+            "unique_name": "definition_activity_01JY89MWTBSE10LuAqw4lhTxwMXRhM9RC4U",
+            "name": "CTR Generate Access Token",
+            "title": "CTR Generate Access Token",
+            "type": "workflow.atomic_workflow",
+            "base_type": "subworkflow",
+            "properties": {
+              "continue_on_failure": false,
+              "display_name": "CTR Generate Access Token",
+              "runtime_user": {
+                "target_default": true
+              },
+              "skip_execution": false,
+              "target": {
+                "override_workflow_target_group_criteria": true,
+                "target_group": {
+                  "run_on_all_targets": false,
+                  "use_criteria": {
+                    "choose_target_using_algorithm": "choose_first_with_matching_criteria",
+                    "conditions": [
+                      {
+                        "left_operand": "$targetgroup.web-service endpoint.input.display_name$",
+                        "operator": "eq",
+                        "right_operand": "CTR_For_Access_Token"
+                      }
+                    ]
+                  }
+                }
+              },
+              "workflow_id": "definition_workflow_01779LB6MV0P02kvka9TGV5cEam84NrCTy4"
+            },
+            "object_type": "definition_activity"
+          },
+          {
+            "unique_name": "definition_activity_01JY89N3MYG4M6kqnp2cUA9mTUBU80qoB4a",
+            "name": "HTTP Request",
+            "title": "Check if Casebook Exists",
+            "type": "web-service.http_request",
+            "base_type": "activity",
+            "properties": {
+              "accept": "application/json",
+              "action_timeout": 180,
+              "allow_auto_redirect": true,
+              "content_type": "application/json",
+              "continue_on_error_status_code": false,
+              "continue_on_failure": true,
+              "custom_headers": [
+                {
+                  "name": "Authorization",
+                  "value": "Bearer $activity.definition_activity_01JY89MWTBSE10LuAqw4lhTxwMXRhM9RC4U.output.variable_workflow_01BNOOXA3G6MV1PGAvsfZOKDdMYcE6XS726$"
+                }
+              ],
+              "display_name": "Check if Casebook Exists",
+              "method": "GET",
+              "relative_url": "/ctia/casebook/$global.variable_01H5OJTIZW5CP2o27dFtWQ7Rw2m0l6FQDku.global.variable_01H5OJTIZW5CP2o27dFtWQ7Rw2m0l6FQDku$",
+              "runtime_user": {
+                "override_target_runtime_user": false,
+                "target_default": true
+              },
+              "skip_execution": true,
+              "target": {
+                "override_workflow_target_group_criteria": true,
+                "target_group": {
+                  "use_criteria": {
+                    "choose_target_using_algorithm": "choose_first_with_matching_criteria",
+                    "conditions": [
+                      {
+                        "left_operand": "$targetgroup.web-service endpoint.input.display_name$",
+                        "operator": "eq",
+                        "right_operand": "Private_CTIA_Target"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "object_type": "definition_activity"
+          },
+          {
+            "unique_name": "definition_activity_01JY89NBQWTXN1pUbNmC1iphMqCunlgDRVn",
+            "name": "CTR Create Casebook",
+            "title": "CTR Create Casebook",
+            "type": "workflow.atomic_workflow",
+            "base_type": "subworkflow",
+            "properties": {
+              "continue_on_failure": false,
+              "display_name": "CTR Create Casebook",
+              "input": {
+                "variable_workflow_01E8OQUDV95VA45dnDR0Kzm5HlMxNSnk7HH": "$activity.definition_activity_01JY89MWTBSE10LuAqw4lhTxwMXRhM9RC4U.output.variable_workflow_01BNOOXA3G6MV1PGAvsfZOKDdMYcE6XS726$",
+                "variable_workflow_01FI7GJDK40MI6qNg2jcng0YaHlmz0Zgwq5": "SecureX Created this casebook for MISP Advisory Observables",
+                "variable_workflow_01FI7JJEVXRFA5s9maRdVwlqV7ENc6KhST2": "MISP Advisory Casebook",
+                "variable_workflow_01FI7NA9QZI9I46crflRbf7I6zIfajxuHrX": "$workflow.definition_workflow_01JY89HVKKM712Wlep5aJCZ4dP2u8g3AqXh.local.variable_workflow_01KI3TFUFR93K1cha9xJ0Yg3br7T1ZxZWIT$",
+                "variable_workflow_01FRLITVY3NO678mmPZHG5lCdqLjEyY2j1h": "raw"
+              },
+              "runtime_user": {
+                "target_default": true
+              },
+              "skip_execution": false,
+              "target": {
+                "override_workflow_target_group_criteria": true,
+                "target_group": {
+                  "run_on_all_targets": false,
+                  "use_criteria": {
+                    "choose_target_using_algorithm": "choose_first_with_matching_criteria",
+                    "conditions": [
+                      {
+                        "left_operand": "$targetgroup.web-service endpoint.input.display_name$",
+                        "operator": "eq",
+                        "right_operand": "Private_CTIA_Target"
+                      }
+                    ]
+                  }
+                }
+              },
+              "workflow_id": "definition_workflow_01DS6ELBOO8YR3uFJZju566LqiqR18VlE6r"
+            },
+            "object_type": "definition_activity"
+          },
+          {
+            "unique_name": "definition_activity_01JY89NK23UKP6aCZssAVnAQcL3NwgxrtOG",
+            "name": "Substring",
+            "title": "Substring",
+            "type": "core.substring",
+            "base_type": "activity",
+            "properties": {
+              "begin": 54,
+              "continue_on_failure": false,
+              "display_name": "Substring",
+              "end": 99,
+              "skip_execution": false,
+              "source": "$activity.definition_activity_01JY89NBQWTXN1pUbNmC1iphMqCunlgDRVn.output.variable_workflow_01DSFE4QJSRYK67ewkTPGkJ0WaGxQSw7KjQ$"
+            },
+            "object_type": "definition_activity"
+          },
+          {
+            "unique_name": "definition_activity_01JY89NQR8T3G2EmhvBBsOaFcLzJlZ7cQ18",
+            "name": "Set Variables",
+            "title": "Update casebook variables",
+            "type": "core.set_multiple_variables",
+            "base_type": "activity",
+            "properties": {
+              "continue_on_failure": false,
+              "display_name": "Update casebook variables",
+              "skip_execution": false,
+              "variables_to_update": [
+                {
+                  "variable_to_update": "$global.variable_01H5OJTIZW5CP2o27dFtWQ7Rw2m0l6FQDku.global.variable_01H5OJTIZW5CP2o27dFtWQ7Rw2m0l6FQDku$",
+                  "variable_value_new": "$activity.definition_activity_01JY89NK23UKP6aCZssAVnAQcL3NwgxrtOG.output.substring$"
+                }
+              ]
+            },
+            "object_type": "definition_activity"
+          },
+          {
+            "unique_name": "definition_activity_01JY89NYD74S80c7BODUg9kgQsTg81U9OUg",
+            "name": "Webex Teams - Post Message to Room",
+            "title": "Webex Teams - Post Message to Room",
+            "type": "workflow.atomic_workflow",
+            "base_type": "subworkflow",
+            "properties": {
+              "continue_on_failure": false,
+              "display_name": "Webex Teams - Post Message to Room",
+              "input": {
+                "variable_workflow_01FGYY44G3MZ55amJu9YqgUeKS8GT49bZx3": "$global.variable_01H0BNK7MLU3M6Bcnlz5qZqYbUrp2zVjnTM.global.variable_01H0BNK7MLU3M6Bcnlz5qZqYbUrp2zVjnTM$",
+                "variable_workflow_01FGYY44G3TK951Crpnd8g2izonyM4bFtpW": "$global.variable_01FWYK9T5GX1E4yrobIXcHqttD01BtOWBQQ.global.variable_01FWYK9T5GX1E4yrobIXcHqttD01BtOWBQQ$",
+                "variable_workflow_01FGYY44G3UPV3heGGc3vXCV47YL5WoI2X6": "SecureX have created Threat Reponse Casebook. Casebook ID: $global.variable_01H5OJTIZW5CP2o27dFtWQ7Rw2m0l6FQDku.global.variable_01H5OJTIZW5CP2o27dFtWQ7Rw2m0l6FQDku$. IoC: $workflow.definition_workflow_01JY89HVKKM712Wlep5aJCZ4dP2u8g3AqXh.local.variable_workflow_01KI3TFUFR93K1cha9xJ0Yg3br7T1ZxZWIT$",
+                "variable_workflow_01FGYZ9BV4QTP19CuMwcW8QywvCP9ymx2BZ": "**SecureX has created Threat Reponse Casebook.**  \\nCasebook ID: $global.variable_01H5OJTIZW5CP2o27dFtWQ7Rw2m0l6FQDku.global.variable_01H5OJTIZW5CP2o27dFtWQ7Rw2m0l6FQDku$\\nIoC: $workflow.definition_workflow_01JY89HVKKM712Wlep5aJCZ4dP2u8g3AqXh.local.variable_workflow_01KI3TFUFR93K1cha9xJ0Yg3br7T1ZxZWIT$"
+              },
+              "runtime_user": {
+                "target_default": true
+              },
+              "skip_execution": false,
+              "target": {
+                "override_workflow_target": true,
+                "target_id": "definition_target_01JGWS7M6TF4O3ORqy7lpxdKRbIO3nR357e",
+                "target_type": "web-service.endpoint"
+              },
+              "workflow_id": "definition_workflow_01FGYY44YU521254ygN3Le0In0kEHpiPNpf"
+            },
+            "object_type": "definition_activity"
+          }
+        ]
+      }
+    ],
+    "categories": [
+      "category_1BMfMXSnJMyt5Ihqi7rWJr5N8cf"
+    ]
+  },
+  "targets": {
+    "definition_target_01JPSSB1YUV8Z3SA6tD22KeUQBhMpt22q9a": {
+      "unique_name": "definition_target_01JPSSB1YUV8Z3SA6tD22KeUQBhMpt22q9a",
+      "name": "Dropbox",
+      "title": "Dropbox",
+      "type": "web-service.endpoint",
+      "base_type": "target",
+      "object_type": "definition_target",
+      "properties": {
+        "disable_certificate_validation": false,
+        "display_name": "Dropbox",
+        "host": "www.dropbox.com",
+        "ignore_proxy": false,
+        "no_runtime_user": true,
+        "protocol": "https"
+      }
+    }
+  },
+  "target_groups": {
+    "target_group_01EJ0TQWPQWBD0qiWqClJKj9FOzwiZRfOFH": {
+      "unique_name": "target_group_01EJ0TQWPQWBD0qiWqClJKj9FOzwiZRfOFH",
+      "name": "Default TargetGroup",
+      "title": "Default TargetGroup",
+      "type": "generic.target_group",
+      "base_type": "target_group",
+      "version": "1.0.0",
+      "targets": [
+        {
+          "data_target_type": "web-service.endpoint",
+          "view_target_type": "web-service.endpoint",
+          "include_all_targets": true
+        },
+        {
+          "data_target_type": "email.smtp_endpoint",
+          "view_target_type": "email.smtp_endpoint",
+          "include_all_targets": true
+        }
+      ],
+      "object_type": "target_group"
+    }
+  },
+  "variables": {
+    "variable_01FWYK9T5GX1E4yrobIXcHqttD01BtOWBQQ": {
+      "unique_name": "variable_01FWYK9T5GX1E4yrobIXcHqttD01BtOWBQQ",
+      "properties": {
+        "value": "Y2lzY29zcGFyazovL3VzL1JPT00vZGZjMjMwMzAtZmJmYi0xMWVhLTliYjgtNGRiYjBiOTZhYWNk",
+        "scope": "global",
+        "name": "Webex Teams Room",
+        "type": "datatype.string",
+        "is_required": false,
+        "is_invisible": false
+      },
+      "object_type": "variable"
+    },
+    "variable_01H0BNK7MLU3M6Bcnlz5qZqYbUrp2zVjnTM": {
+      "unique_name": "variable_01H0BNK7MLU3M6Bcnlz5qZqYbUrp2zVjnTM",
+      "properties": {
+        "value": "*****",
+        "scope": "global",
+        "name": "Webex Teams Bot Token",
+        "type": "datatype.secure_string",
+        "is_required": false,
+        "is_invisible": false
+      },
+      "object_type": "variable"
+    },
+    "variable_01H5OJTIZW5CP2o27dFtWQ7Rw2m0l6FQDku": {
+      "unique_name": "variable_01H5OJTIZW5CP2o27dFtWQ7Rw2m0l6FQDku",
+      "properties": {
+        "value": "ok/casebook-329953aa-a848-4e39-bd62-58d38760e",
+        "scope": "global",
+        "name": "casebook_id",
+        "type": "datatype.string",
+        "is_required": false,
+        "is_invisible": false
+      },
+      "object_type": "variable"
+    }
+  },
+  "table_types": {
+    "tabletype_01JY94PPFF7V70LaoyLIy2MA4gHxJXAT7Qp": {
+      "unique_name": "tabletype_01JY94PPFF7V70LaoyLIy2MA4gHxJXAT7Qp",
+      "data_type": "datatype.tabletype",
+      "display_name": "Observables",
+      "columns": [
+        {
+          "name": "type",
+          "title": "Type",
+          "type": "string"
+        },
+        {
+          "name": "value",
+          "title": "Value",
+          "type": "string"
+        }
+      ],
+      "base_type": "datatype",
+      "object_type": "tabletype"
+    }
+  },
+  "atomic_workflows": [
+    "definition_workflow_01C9F1VJ1I5KH26f860hJC5zDSD33548bYS",
+    "definition_workflow_01DS6ELBOO8YR3uFJZju566LqiqR18VlE6r",
+    "definition_workflow_01FGYY44YU521254ygN3Le0In0kEHpiPNpf",
+    "definition_workflow_01779LB6MV0P02kvka9TGV5cEam84NrCTy4"
+  ]
+}
